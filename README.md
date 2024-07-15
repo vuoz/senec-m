@@ -67,5 +67,7 @@ Building for docker arm64 requires this command:
 docker buildx build --platform linux/arm64 -f Dockerfile -t username/test-repo:senec-monitor-latest --push  .
 ```
 
+## Todos
+- [ ] add ci/cd pipeline for automatic container builds
 
 
