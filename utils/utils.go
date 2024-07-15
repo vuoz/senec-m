@@ -171,6 +171,43 @@ func ReadEnv(fileName string) (types.DbCreds, types.UserInput, types.Cordinate, 
 	return *CredsForReturn, *InputForReturn, *CordsForReturn, ip, nil
 
 }
+func ReadEnvFromEnvFile() (types.DbCreds, types.UserInput, types.Cordinate, string, error) {
+	CordsForError := types.Cordinate{}
+	CredsForError := types.DbCreds{}
+	InputForError := types.UserInput{}
+	pass := os.Getenv("SENEC_PASS")
+	user := os.Getenv("SENEC_USER")
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	db_pass := os.Getenv("DB_PASS")
+	db_user := os.Getenv("DB_USER")
+	db_name := os.Getenv("DB_NAME")
+	long := os.Getenv("LONGITUDE")
+	lat := os.Getenv("LATITUDE")
+	ip := os.Getenv("SENEC_IP")
+	if pass == "" || user == "" || host == "" || port == "" || db_pass == "" || db_name == "" || db_user == "" || long == "" || lat == "" || ip == "" {
+		return CredsForError, InputForError, CordsForError, "", fmt.Errorf("missing value in env file")
+	}
+	port_int, err := strconv.Atoi(port)
+	if err != nil {
+
+		return CredsForError, InputForError, CordsForError, "", fmt.Errorf("error parsing int")
+	}
+	return types.DbCreds{
+			Host:     host,
+			User:     db_user,
+			Password: db_pass,
+			Port:     port_int,
+			DbName:   db_name,
+		}, types.UserInput{
+			User: user,
+			Pass: pass,
+		}, types.Cordinate{
+			Long: long,
+			Lat:  lat,
+		}, ip, nil
+
+}
 func ParseStringDataToStruct(data types.LocalApiResponse) (*types.LocalApiDataWithCorrectTypes, error) {
 	stat_stat, err := parseHexStringU8(data.Energy.StatState)
 	if err != nil {

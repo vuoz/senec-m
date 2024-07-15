@@ -10,6 +10,8 @@ import (
 	"senec-monitor/utils"
 	"senec-monitor/weather"
 	"sync"
+
+	"github.com/joho/godotenv"
 )
 
 // Making this global is not ideal but passing this around in every function is worse imo
@@ -26,9 +28,11 @@ func main() {
 		err          error
 	)
 	if os.Getenv("mode") == "docker" {
-		DbCreds, UserCreds, WeatherCords, senec_ip, err = utils.ReadEnv("run/secrets/config")
+		godotenv.Load("run/secrets/config")
+		DbCreds, UserCreds, WeatherCords, senec_ip, err = utils.ReadEnvFromEnvFile()
 	} else {
-		DbCreds, UserCreds, WeatherCords, senec_ip, err = utils.ReadEnv(".env")
+		godotenv.Load(".env")
+		DbCreds, UserCreds, WeatherCords, senec_ip, err = utils.ReadEnvFromEnvFile()
 	}
 	if err != nil {
 		logger.Log('P', err)
