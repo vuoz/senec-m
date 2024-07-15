@@ -1,0 +1,1 @@
+SELECT * FROM local_data ORDER BY ts DESC LIMIT 1

@@ -1,0 +1,76 @@
+package main
+
+import (
+	"os"
+	"senec-monitor/db"
+	"senec-monitor/logging"
+	"senec-monitor/server"
+	"senec-monitor/task"
+	"senec-monitor/types"
+	"senec-monitor/utils"
+	"senec-monitor/weather"
+	"sync"
+)
+
+// Making this global is not ideal but passing this around in every function is worse imo
+var LatestWeatherData *types.LatestWeather
+var LatestTotal *types.LatestTotal
+
+func main() {
+	logger := logging.NewLoggerWithoutFile()
+	var (
+		DbCreds      types.DbCreds
+		UserCreds    types.UserInput
+		WeatherCords types.Cordinate
+		senec_ip     string
+		err          error
+	)
+	if os.Getenv("mode") == "docker" {
+		DbCreds, UserCreds, WeatherCords, senec_ip, err = utils.ReadEnv("run/secrets/config")
+	} else {
+		DbCreds, UserCreds, WeatherCords, senec_ip, err = utils.ReadEnv(".env")
+	}
+	if err != nil {
+		logger.Log('P', err)
+	}
+	stmts, err := utils.ReadStatments()
+	if err != nil {
+		logger.Log('P', err)
+	}
+	service, err := db.NewPostgresService(DbCreds, stmts)
+	if err != nil {
+		logger.Log('P', err)
+	}
+	LatestWeatherData = &types.LatestWeather{Mu: sync.RWMutex{}, Data: types.ApiRespHourly{}}
+	dataChan := make(chan *types.LocalApiDataWithCorrectTypes)
+
+	LatestTotal = types.NewLatestTotal()
+	go task.GetTotalEveryHour(UserCreds, logger, LatestTotal)
+
+	weatherCh := make(chan types.ApiRespHourly)
+	go task.CreateAndLoopLocalTask(logger, service, dataChan, senec_ip)
+	go task.LoopAndUpdate(UserCreds, service, logger)
+
+	go func() {
+		for {
+			select {
+			case msg := <-weatherCh:
+				{
+					LatestWeatherData.Set(msg)
+				}
+			default:
+				continue
+
+			}
+		}
+
+	}()
+	// get weather for each day in the morning
+	go weather.GetWeatherEvery24(WeatherCords, logger, service)
+
+	// for weather updates each hour
+	go weather.GetWeatherHourly(WeatherCords, logger, weatherCh)
+	server := server.NewServer(logger, service)
+
+	server.Start(dataChan, LatestWeatherData, LatestTotal)
+}
