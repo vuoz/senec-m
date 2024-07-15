@@ -122,7 +122,7 @@ func GetWeatherEvery10Min(cords types.Cordinate, logger logging.Logger, weatherC
 	for {
 		res, err := task.GetWeatherHourly()
 		if err != nil {
-			logger.Log('E', "Error getting weather data ", err)
+			logger.Err("Error getting weather data ", err)
 			time.Sleep(2 * time.Minute)
 			continue
 		}
@@ -144,9 +144,9 @@ func GetWeatherEvery24(cords types.Cordinate, logger logging.Logger, database db
 		resp, err := task.GetWeatherDaily()
 		if err != nil {
 			if retry_count >= 5 {
-				logger.Log('E', "Hit retry limit on Daily Weather task")
+				logger.Err("Hit retry limit on Daily Weather task")
 			}
-			logger.Log('E', "Error getting Daily Weather: ", err)
+			logger.Err("Error getting Daily Weather: ", err)
 			retry_count++
 			time.Sleep(10 * time.Second)
 			continue
@@ -155,7 +155,7 @@ func GetWeatherEvery24(cords types.Cordinate, logger logging.Logger, database db
 		retry_count = 0
 
 		if err := database.WriteWeather24Hours(resp.ToDbType()); err != nil {
-			logger.Log('E', "Error saving weather data ", err)
+			logger.Err("Error saving weather data ", err)
 		}
 
 		// for every reoccuring day
@@ -226,7 +226,7 @@ func GetWeatherHourly(cords types.Cordinate, logger logging.Logger, weatherChan 
 	for {
 		resp, err := t.GetWeatherHourlyV2()
 		if err != nil {
-			logger.Log('E', "Error getting weather data: ", err)
+			logger.Err("Error getting weather data: ", err)
 			time.Sleep(10 * time.Second)
 			retries++
 			if retries > 5 {
@@ -241,6 +241,6 @@ func GetWeatherHourly(cords types.Cordinate, logger logging.Logger, weatherChan 
 		time.Sleep(1 * time.Hour)
 
 	}
-	logger.Log('E', "Stopped weather task after 5 retries.")
+	logger.Err("Stopped weather task after 5 retries.")
 
 }

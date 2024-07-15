@@ -165,22 +165,22 @@ func (t *Task) run(inpt types.UserInput) *types.Response2 {
 	for {
 		err := t.getLogin()
 		if err != nil {
-			t.log.Log('E', "Eroror getting login page")
+			t.log.Err("Eroror getting login page")
 			time.Sleep(5 * time.Second)
 			continue
 		}
-		t.log.Log('S', "Got login page")
+		t.log.Success("Got login page")
 		break
 
 	}
 	for {
 		err := t.sendLogin(inpt.User, inpt.Pass)
 		if err != nil {
-			t.log.Log('E', "Error sending login")
+			t.log.Err("Error sending login")
 			time.Sleep(5 * time.Second)
 			continue
 		}
-		t.log.Log('S', "Succesfully send login")
+		t.log.Success("Succesfully send login")
 		break
 	}
 
@@ -189,11 +189,11 @@ func (t *Task) run(inpt types.UserInput) *types.Response2 {
 		var err error
 		res, err = t.getData()
 		if err != nil {
-			t.log.Log('E', "Error getting data ", err)
+			t.log.Err("Error getting data ", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
-		t.log.Log('S', "Got Data")
+		t.log.Success("Got Data")
 		break
 	}
 	return res
@@ -262,13 +262,13 @@ func LoopAndUpdate(UserCreds types.UserInput, service db.DbService, logger loggi
 		time.Sleep(timeToSleep)
 		result, err := LaunchTask(UserCreds, logger)
 		if err != nil {
-			logger.Log('P', err)
+			logger.Fatal(err)
 		}
 
 		if err := service.Write(result); err != nil {
-			logger.Log('P', err)
+			logger.Fatal(err)
 		}
-		logger.Log('S', "updated database")
+		logger.Success("updated database")
 		// To ensure that the task sleeps until after 00:00 and doesnt enter a loop
 		time.Sleep(10 * time.Minute)
 
@@ -282,10 +282,10 @@ func (t *Task) getTotalEveryHour(creds types.UserInput, logger logging.Logger, l
 	for {
 		err := task.getLogin()
 		if err != nil {
-			logger.Log('E', "Error logging in task for total data err: ", err)
+			logger.Err("Error logging in task for total data err: ", err)
 			retries++
 			if retries > 5 {
-				logger.Log('E', "Hit 6 retries for total task trying again later!")
+				logger.Err("Hit 6 retries for total task trying again later!")
 				return err
 			}
 			continue
@@ -298,10 +298,10 @@ func (t *Task) getTotalEveryHour(creds types.UserInput, logger logging.Logger, l
 		err := task.sendLogin(creds.User, creds.Pass)
 		if err != nil {
 			if retries > 5 {
-				logger.Log('E', "Hit 6 retries for total task trying again later!")
+				logger.Err("Hit 6 retries for total task trying again later!")
 				return err
 			}
-			logger.Log('E', "Error logging in task for total data err: ", err)
+			logger.Err("Error logging in task for total data err: ", err)
 			retries++
 			continue
 
@@ -315,11 +315,11 @@ func (t *Task) getTotalEveryHour(creds types.UserInput, logger logging.Logger, l
 		if err != nil {
 			retries++
 			if retries > 5 {
-				logger.Log('E', "Hit retry limit for total task trying again later err: ", err)
+				logger.Err("Hit retry limit for total task trying again later err: ", err)
 				return err
 			}
 
-			logger.Log('E', "Error data for total data task retry: ", retries, " err: ", err)
+			logger.Err("Error data for total data task retry: ", retries, " err: ", err)
 			continue
 		}
 		retries = 0
@@ -337,14 +337,14 @@ func (t *Task) getTotalEveryHour(creds types.UserInput, logger logging.Logger, l
 func GetTotalEveryHour(creds types.UserInput, logger logging.Logger, latestTotal *types.LatestTotal) {
 	task, err := newTask(logger)
 	if err != nil {
-		logger.Log('P', "Error creating task")
+		logger.Fatal("Error creating task")
 	}
 	totalRetries := 0
 	for {
 		if err := task.getTotalEveryHour(creds, logger, latestTotal); err != nil {
 			totalRetries++
 			if totalRetries >= 2 {
-				logger.Log('E', " Error hit limit for local task")
+				logger.Err(" Error hit limit for local task")
 			}
 			time.Sleep(10 * time.Minute)
 			continue

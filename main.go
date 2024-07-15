@@ -35,15 +35,15 @@ func main() {
 		DbCreds, UserCreds, WeatherCords, senec_ip, err = utils.ReadEnvFromEnvFile()
 	}
 	if err != nil {
-		logger.Log('P', err)
+		logger.Fatal(err)
 	}
 	stmts, err := utils.ReadStatments()
 	if err != nil {
-		logger.Log('P', err)
+		logger.Fatal(err)
 	}
 	service, err := db.NewPostgresService(DbCreds, stmts)
 	if err != nil {
-		logger.Log('P', err)
+		logger.Fatal(err)
 	}
 	LatestWeatherData = &types.LatestWeather{Mu: sync.RWMutex{}, Data: types.ApiRespHourly{}}
 	dataChan := make(chan *types.LocalApiDataWithCorrectTypes)

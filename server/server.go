@@ -48,7 +48,7 @@ func (s *Server) Start(c <-chan *types.LocalApiDataWithCorrectTypes, latestWeath
 	serveMux.Handle("/data", s.wrapHandlerWithDB(handleGetSpecificTs))
 	serveMux.Handle("/localLatest", s.wrapHandlerWithDB(handleGetLocalLatest))
 	serveMux.Handle("/subscribe", s.wrapHandlerWithWsMap(handleUpgrade, s.Clients))
-	s.logger.Log('I', "Started Server")
+	s.logger.Info("Started Server")
 	go func() {
 		for {
 			select {
@@ -84,7 +84,7 @@ func (s *Server) Start(c <-chan *types.LocalApiDataWithCorrectTypes, latestWeath
 
 	}()
 	if err := http.ListenAndServe("0.0.0.0:5000", serveMux); err != nil {
-		s.logger.Log('E', "Error occured starting server: ", err)
+		s.logger.Info('E', "Error occured starting server: ", err)
 	}
 }
 
@@ -106,7 +106,7 @@ func (s *Server) wrapHandler(fn func(http.ResponseWriter, *http.Request) error) 
 
 			}
 
-			s.logger.Log('E', err)
+			s.logger.Info(err)
 			wr.WriteHeader(500)
 			wr.Write([]byte("Internal Server Error"))
 			return
@@ -132,7 +132,7 @@ func (s *Server) wrapHandlerWithWsMap(fn func(http.ResponseWriter, *http.Request
 
 			}
 
-			s.logger.Log('E', err)
+			s.logger.Info(err)
 			wr.WriteHeader(500)
 			wr.Write([]byte("Internal Server Error"))
 			return
@@ -157,7 +157,7 @@ func (s *Server) wrapHandlerWithDB(fn func(http.ResponseWriter, *http.Request, d
 				return
 
 			}
-			s.logger.Log('E', err)
+			s.logger.Info(err)
 			wr.WriteHeader(500)
 			wr.Write([]byte("Internal Server Error"))
 			return

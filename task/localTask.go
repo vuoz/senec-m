@@ -76,25 +76,25 @@ func (t *LocalTask) loop(db db.DbService, c chan<- *types.LocalApiDataWithCorrec
 	for {
 		res, err := t.GetData()
 		if err != nil {
-			t.log.Log('E', "Error getting data from local api: ", err)
+			t.log.Err("Error getting data from local api: ", err)
 			time.Sleep(10 * time.Second)
 			continue
 		}
 		parsedData, err := utils.ParseStringDataToStruct(res)
 		if err != nil {
-			t.log.Log('E', "Error parsing response to correct types: ", err)
+			t.log.Err("Error parsing response to correct types: ", err)
 			time.Sleep(10 * time.Second)
 			continue
 		}
 		c <- parsedData
 		if err := db.WriteLocalApiData(*parsedData); err != nil {
-			t.log.Log('E', "Cannot save data to database: ", err)
+			t.log.Err("Cannot save data to database: ", err)
 			time.Sleep(10 * time.Second)
 			continue
 		}
 		num++
 		if num%10 == 0 {
-			t.log.Log('I', "Collected local data 10x")
+			t.log.Info("collected local data 10x")
 		}
 
 		time.Sleep(10 * time.Second)

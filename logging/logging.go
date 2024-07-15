@@ -11,7 +11,10 @@ import (
 )
 
 type Logger interface {
-	Log(level rune, inp ...interface{})
+	Err(a ...interface{})
+	Success(a ...interface{})
+	Info(a ...interface{})
+	Fatal(a ...interface{})
 }
 type ColorLogger struct {
 	green  func(a ...interface{}) string
@@ -42,25 +45,6 @@ func (l *ColorLogger) writeToFile() error {
 	return nil
 }
 
-// this will panic if you give an invalid file name
-func NewColorLoggerWithFile(name string) Logger {
-	file, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE, 0755)
-	if err != nil {
-		log.Fatal("Error opening file for logging")
-
-	}
-	green := color.New(color.FgGreen).SprintFunc()
-	red := color.New(color.FgRed).SprintFunc()
-	buf := bytes.Buffer{}
-	return &ColorLogger{
-		green:  green,
-		red:    red,
-		file:   file,
-		mu:     sync.Mutex{},
-		msgBuf: buf,
-	}
-
-}
 func NewLoggerWithoutFile() Logger {
 	green := color.New(color.FgGreen).SprintFunc()
 	red := color.New(color.FgRed).SprintFunc()
@@ -70,90 +54,15 @@ func NewLoggerWithoutFile() Logger {
 	}
 
 }
-func (l *ColorLogger) Log(level rune, inp ...interface{}) {
-	switch level {
-	case 'E':
-		{
-			go func() {
-				l.mu.Lock()
-				fmt.Fprint(&l.msgBuf, inp...)
-				fmt.Fprintf(&l.msgBuf, "\n")
-				l.mu.Unlock()
-				if l.writes >= 10 {
-					l.writeToFile()
-					l.writes = 0
-				} else {
-
-					l.writes = l.writes + 1
-				}
-
-			}()
-
-			log.Println(l.red(inp...))
-
-		}
-	case 'I':
-		{
-
-			log.Println(inp...)
-
-		}
-	case 'S':
-		{
-
-			log.Println(l.green(inp...))
-
-		}
-	case 'P':
-		{
-			l.mu.Lock()
-			fmt.Fprint(&l.msgBuf, inp...)
-			fmt.Fprint(&l.msgBuf, "\n")
-			l.mu.Unlock()
-			if l.writes >= 10 {
-				l.writeToFile()
-				l.writes = 0
-			} else {
-				l.writes = l.writes + 1
-			}
-			log.Fatal(l.red(inp...))
-		}
-	default:
-		{
-
-			log.Println(inp...)
-
-		}
-
-	}
+func (l *LoggerWithoutFile) Err(a ...interface{}) {
+	log.Println(l.red(a...))
 }
-func (l *LoggerWithoutFile) Log(level rune, inp ...interface{}) {
-	switch level {
-	case 'E':
-		{
-			log.Println(l.red(inp...))
-
-		}
-	case 'I':
-		{
-
-			log.Println(inp...)
-
-		}
-	case 'S':
-		{
-
-			log.Println(l.green(inp...))
-
-		}
-	case 'P':
-		{
-			log.Fatal(l.red(inp...))
-		}
-	default:
-		{
-			log.Println(inp...)
-		}
-
-	}
+func (l *LoggerWithoutFile) Success(a ...interface{}) {
+	log.Println(l.green(a...))
+}
+func (l *LoggerWithoutFile) Info(a ...interface{}) {
+	log.Println(a...)
+}
+func (l *LoggerWithoutFile) Fatal(a ...interface{}) {
+	log.Fatal(l.red(a...))
 }

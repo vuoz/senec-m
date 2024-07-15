@@ -79,9 +79,10 @@ func ReadEnv(fileName string) (types.DbCreds, types.UserInput, types.Cordinate, 
 		return CredsForError, InputForError, CordsForError, "", err
 	}
 	scanner := bufio.NewScanner(file)
-	if err != nil {
+	if err := scanner.Err(); err != nil {
 		return CredsForError, InputForError, CordsForError, "", err
 	}
+
 	lines := []string{}
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
