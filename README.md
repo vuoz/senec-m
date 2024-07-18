@@ -64,7 +64,7 @@ localhost:4000/
 
 Building for docker arm64 requires this command:
 ```shell
-docker buildx build --platform linux/arm64 -f Dockerfile -t username/test-repo:senec-monitor-latest --push  .
+docker buildx build --platform linux/arm64 -f Dockerfile -t your_username/test-repo:senec-monitor-latest --push  .
 ```
 
 ## Todos

@@ -13,12 +13,12 @@ services:
       context: .
       target: final
     ports:
-      - 4000:4000
+      - 5000:5000
     secrets:
      - config
+    environment:
+     - mode=docker
     image: zvup/test-repo:senec-monitor-latest
-    networks:
-     - senec-db_shared_network 
 
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to
@@ -53,6 +53,3 @@ secrets:
   config:
     file: .docker.env
 
-networks:
-  senec-db_shared_network:
-    external: true
