@@ -76,6 +76,7 @@ RUN adduser \
     appuser
 USER appuser
 ENV mode="docker"
+ENV TZ=Europe/Paris
 
 # Copy the executable from the "build" stage.
 COPY --from=build /bin/server /bin/
