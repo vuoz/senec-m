@@ -1,6 +1,4 @@
 name: "Build and Push docker image"
-description: "Build docker image for server and push it to docker hub"
-
 on:
   push:
     branches:
