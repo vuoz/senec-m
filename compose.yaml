@@ -12,6 +12,8 @@ services:
     image: zvup/test-repo:senec-monitor-latest
     depends_on:
       - db
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
   db:
     image: postgres
     restart: always
@@ -34,6 +36,17 @@ services:
         - 5050:80
       depends_on:
         - db
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.docker/config.json:/config.json
+    environment:
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_POLL_INTERVAL: 300
+    restart: always
+    command: --label-enable
+
 volumes:
   pgdata:
   pgInit:

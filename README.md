@@ -43,6 +43,9 @@ Copy  ```compose.yaml``` to your directory and run:
 ```shell
 docker compose pull
 ```
+Also copy the ```/docker-db/initFiles/init.sql``` to the directory containing the compose file.    
+This is important as it initializes the database with the required tables
+```shell
 Createa a ```.docker.env``` with the following values
 ```shell
 # your my-senec login password
@@ -74,6 +77,10 @@ Then run
 ```shell
 docker compose up
 ```
+
+**Please note that currently this docker compose file utilizes watchtower to check for container updates.   
+If you do not plan on continuously working on this project yourself you can just remove everything associated with watchtower from the compose file.**
+
 Now you should be able to visit the service on:
 ```shell
 localhost:4000/
