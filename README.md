@@ -4,7 +4,7 @@ It retrieves the data for your photovoltaic system
 and saves it to a postgres database.  
 
 ## Utility
-- Websocket connection can be used by embedded devices to get real time data [Check out my implementation with ESP32]()
+- Websocket connection can be used by embedded devices to get real time data [Check out my implementation with ESP32](https://github.com/vuoz/senec-c)
 - Creates a record of yield data that can be used for analysis and prediction ( also saves weather data )
 - Combines current photovoltaic system data with weather data to allow for accurate prediction / forecast
 - Could also be developed into a more sophisticated web interface in combination with weather data, graphs etc
