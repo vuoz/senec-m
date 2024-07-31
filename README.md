@@ -43,7 +43,9 @@ Copy  ```compose.yaml``` to your directory and run:
 ```shell
 docker compose pull
 ```
-Also copy the ```/docker-db/initFiles/init.sql``` to the directory containing the compose file.    
+Also copy the ```/docker-db/initFiles/init.sql``` to the directory containing the compose file. 
+Please perserve the directory structure so that the init.sql file lies iside the ```/docker-db/initFiles/``` directory to make sure the db   
+is intialized properly.
 This is important as it initializes the database with the required tables
 ```shell
 Createa a ```.docker.env``` with the following values
@@ -55,16 +57,16 @@ SENEC_PASS=
 SENEC_USER= 
 
 # db host default should be  "docker.host.internal"
-DB_HOST=
+DB_HOST=docker.host.internal
 
 # db port default should be 6000
-DB_PORT=
+DB_PORT=6000
 
 # db password default is yourpass
-DB_PASS=
+DB_PASS=yourpassj
 
 # db user default is myuser
-DB_USER=
+DB_USER=myuser
 
 # just search the coordinates of your location and put them here
 LONGITUDE=
@@ -92,7 +94,7 @@ localhost:4000/
 ## Instructions (dev)
 
 Create database and table with docker (to have a separate database)
-- [DB Setup with docker compose](https://github.com/zvup/senec-monitor-db)
+- [DB Setup with docker compose](https://github.com/vuoz/senec-monitor-db)
 
 Clone the repo
 
