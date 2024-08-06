@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	database "senec-monitor/db"
+	"senec-monitor/types"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -69,12 +70,9 @@ func handleGetSpecificTs(w http.ResponseWriter, r *http.Request, db database.DbS
 	w.Write(json)
 	return nil
 }
-func handleGetLocalLatest(w http.ResponseWriter, _ *http.Request, db database.DbService) error {
-	res, err := db.GetLatestFromLocal()
-	if err != nil {
-		return err
-	}
-	json, err := json.Marshal(res)
+func handleGetLocalLatest(w http.ResponseWriter, _ *http.Request, dataa *types.LatestLocal) error {
+	data := dataa.Get()
+	json, err := json.Marshal(data)
 	if err != nil {
 		var userError *database.UserInputError
 		ok := errors.As(err, &userError)
@@ -86,7 +84,6 @@ func handleGetLocalLatest(w http.ResponseWriter, _ *http.Request, db database.Db
 			return err
 		}
 	}
-
 	w.Header().Add("Content-type", "application/json")
 	w.WriteHeader(200)
 	w.Write(json)

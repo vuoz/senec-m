@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"senec-monitor/db"
 	"senec-monitor/logging"
 	"senec-monitor/types"
 	"senec-monitor/utils"
@@ -33,9 +32,9 @@ func NewLocalTask(log logging.Logger, ip string) *LocalTask {
 	}
 
 }
-func CreateAndLoopLocalTask(log logging.Logger, db db.DbService, c chan<- *types.LocalApiDataWithCorrectTypes, ip string) {
+func CreateAndLoopLocalTask(log logging.Logger, c chan<- *types.LocalApiDataWithCorrectTypes, ip string) {
 	task := NewLocalTask(log, ip)
-	task.loop(db, c)
+	task.loop(c)
 }
 
 func (t *LocalTask) GetData() (types.LocalApiResponse, error) {
@@ -71,7 +70,7 @@ func (t *LocalTask) GetData() (types.LocalApiResponse, error) {
 	return *data, nil
 
 }
-func (t *LocalTask) loop(db db.DbService, c chan<- *types.LocalApiDataWithCorrectTypes) {
+func (t *LocalTask) loop(c chan<- *types.LocalApiDataWithCorrectTypes) {
 	num := 0
 	for {
 		res, err := t.GetData()
@@ -87,11 +86,6 @@ func (t *LocalTask) loop(db db.DbService, c chan<- *types.LocalApiDataWithCorrec
 			continue
 		}
 		c <- parsedData
-		if err := db.WriteLocalApiData(*parsedData); err != nil {
-			t.log.Err("Cannot save data to database: ", err)
-			time.Sleep(10 * time.Second)
-			continue
-		}
 		num++
 		if num%10 == 0 {
 			t.log.Info("collected local data 10x")

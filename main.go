@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/joho/godotenv"
 	"os"
 	"senec-monitor/db"
 	"senec-monitor/logging"
@@ -10,13 +11,12 @@ import (
 	"senec-monitor/utils"
 	"senec-monitor/weather"
 	"sync"
-
-	"github.com/joho/godotenv"
 )
 
 // Making this global is not ideal but passing this around in every function is worse imo
 var LatestWeatherData *types.LatestWeather
 var LatestTotal *types.LatestTotal
+var LatestLocal *types.LatestLocal
 
 func main() {
 	logger := logging.NewLoggerWithoutFile()
@@ -51,8 +51,9 @@ func main() {
 	LatestTotal = types.NewLatestTotal()
 	go task.GetTotalEveryHour(UserCreds, logger, LatestTotal)
 
+	LatestLocal = types.NewLatestLocal()
 	weatherCh := make(chan types.ApiRespHourly)
-	go task.CreateAndLoopLocalTask(logger, service, dataChan, senec_ip)
+	go task.CreateAndLoopLocalTask(logger, dataChan, senec_ip)
 	go task.LoopAndUpdate(UserCreds, service, logger)
 
 	go func() {
@@ -76,5 +77,5 @@ func main() {
 	go weather.GetWeatherHourly(WeatherCords, logger, weatherCh)
 	server := server.NewServer(logger, service)
 
-	server.Start(dataChan, LatestWeatherData, LatestTotal)
+	server.Start(dataChan, LatestWeatherData, LatestTotal, LatestLocal)
 }

@@ -41,12 +41,12 @@ func NewServer(log logging.Logger, db db.DbService) *Server {
 	}
 }
 
-func (s *Server) Start(c <-chan *types.LocalApiDataWithCorrectTypes, latestWeather *types.LatestWeather, latestTotal *types.LatestTotal) {
+func (s *Server) Start(c <-chan *types.LocalApiDataWithCorrectTypes, latestWeather *types.LatestWeather, latestTotal *types.LatestTotal, latestLocal *types.LatestLocal) {
 	serveMux := http.NewServeMux()
 	serveMux.Handle("/", s.wrapHandler(handleIndex))
 	serveMux.Handle("/full", s.wrapHandlerWithDB(handleGetData))
 	serveMux.Handle("/data", s.wrapHandlerWithDB(handleGetSpecificTs))
-	serveMux.Handle("/localLatest", s.wrapHandlerWithDB(handleGetLocalLatest))
+	serveMux.Handle("/localLatest", s.wrapHandlerWithLocalLatest(handleGetLocalLatest, latestLocal))
 	serveMux.Handle("/subscribe", s.wrapHandlerWithWsMap(handleUpgrade, s.Clients))
 	s.logger.Info("Started Server")
 	go func() {
@@ -56,6 +56,7 @@ func (s *Server) Start(c <-chan *types.LocalApiDataWithCorrectTypes, latestWeath
 				{
 					// error doesnt matter since it still returns an emtpy struct
 					v, _ := latestTotal.Get()
+					latestLocal.Set(*msg)
 
 					string_data := msg.ConvertToStrings(latestWeather.Get(), v)
 
@@ -114,6 +115,33 @@ func (s *Server) wrapHandler(fn func(http.ResponseWriter, *http.Request) error) 
 	}
 
 }
+func (s *Server) wrapHandlerWithLocalLatest(fn func(http.ResponseWriter, *http.Request, *types.LatestLocal) error, data *types.LatestLocal) http.HandlerFunc {
+	return func(wr http.ResponseWriter, r *http.Request) {
+		if err := fn(wr, r, data); err != nil {
+			var handlerError *HandlerError
+			ok := errors.As(err, &handlerError)
+			if ok {
+
+				// These errors wont be logged, since these are user errors
+				wr.WriteHeader(500)
+				data, err := json.Marshal(types.HandlerErrorResponse{Error: err.Error()})
+				if err != nil {
+					return
+				}
+				wr.Write(data)
+				return
+
+			}
+
+			s.logger.Info(err)
+			wr.WriteHeader(500)
+			wr.Write([]byte("Internal Server Error"))
+			return
+		}
+	}
+
+}
+
 func (s *Server) wrapHandlerWithWsMap(fn func(http.ResponseWriter, *http.Request, *WsStruct) error, clients *WsStruct) http.HandlerFunc {
 	return func(wr http.ResponseWriter, r *http.Request) {
 		if err := fn(wr, r, clients); err != nil {

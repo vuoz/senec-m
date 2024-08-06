@@ -20,10 +20,32 @@ type LatestTotal struct {
 	data TotalData
 	new  bool
 }
+
 type TotalData struct {
 	Consumption string `json:"consumption"`
 	Generated   string `json:"generated"`
 	New         bool   `json:"new"`
+}
+type LatestLocal struct {
+	mu   sync.RWMutex
+	data LocalApiDataWithCorrectTypes
+}
+
+func NewLatestLocal() *LatestLocal {
+	return &LatestLocal{
+		mu:   sync.RWMutex{},
+		data: LocalApiDataWithCorrectTypes{},
+	}
+}
+func (t *LatestLocal) Set(data LocalApiDataWithCorrectTypes) {
+	t.mu.Lock()
+	t.data = data
+	t.mu.Unlock()
+}
+func (t *LatestLocal) Get() LocalApiDataWithCorrectTypes {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.data
 }
 
 func NewLatestTotal() *LatestTotal {
