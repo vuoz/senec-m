@@ -44,7 +44,7 @@ Copy  ```compose.yaml``` to your directory and run:
 docker compose pull
 ```
 Also copy the ```/docker-db/initFiles/init.sql``` to the directory containing the compose file. 
-Please perserve the directory structure so that the init.sql file lies iside the ```/docker-db/initFiles/``` directory to make sure the db   
+Please preserve the directory structure so that the init.sql file lies inside the ```/docker-db/initFiles/``` directory to make sure the db   
 is intialized properly.
 This is important as it initializes the database with the required tables
 ```shell
