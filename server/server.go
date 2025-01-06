@@ -84,7 +84,7 @@ func (s *Server) Start(c <-chan *types.LocalApiDataWithCorrectTypes, latestWeath
 		}
 
 	}()
-	if err := http.ListenAndServe("0.0.0.0:5000", serveMux); err != nil {
+	if err := http.ListenAndServe("0.0.0.0:6000", serveMux); err != nil {
 		s.logger.Info('E', "Error occured starting server: ", err)
 	}
 }

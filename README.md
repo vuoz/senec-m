@@ -3,6 +3,9 @@ This is a monitor accessing the unofficial senec api.
 It retrieves the data for your photovoltaic system  
 and saves it to a postgres database.  
 
+### Info
+Previous tracking of this project happend over at [prev repo](https://github.com/vuoz/senec-monitor)
+
 ## Utility
 - Websocket connection can be used by embedded devices to get real time data [Check out my implementation with ESP32](https://github.com/vuoz/senec-c)
 - Creates a record of yield data that can be used for analysis and prediction ( also saves weather data )
