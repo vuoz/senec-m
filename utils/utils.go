@@ -2,9 +2,14 @@ package utils
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"math"
 	"math/big"
+	"net/http"
 	"os"
 	"senec-monitor/types"
 	"strconv"
@@ -172,7 +177,7 @@ func ReadEnv(fileName string) (types.DbCreds, types.UserInput, types.Cordinate, 
 	return *CredsForReturn, *InputForReturn, *CordsForReturn, ip, nil
 
 }
-func ReadEnvFromEnvFile() (types.DbCreds, types.UserInput, types.Cordinate, string, error) {
+func ReadEnvFromEnvFile() (types.DbCreds, types.UserInput, types.Cordinate, string, string, error) {
 	CordsForError := types.Cordinate{}
 	CredsForError := types.DbCreds{}
 	InputForError := types.UserInput{}
@@ -186,13 +191,15 @@ func ReadEnvFromEnvFile() (types.DbCreds, types.UserInput, types.Cordinate, stri
 	long := os.Getenv("LONGITUDE")
 	lat := os.Getenv("LATITUDE")
 	ip := os.Getenv("SENEC_IP")
+	predUrl := os.Getenv("PREDICTION_URL")
+
 	if pass == "" || user == "" || host == "" || port == "" || db_pass == "" || db_name == "" || db_user == "" || long == "" || lat == "" || ip == "" {
-		return CredsForError, InputForError, CordsForError, "", fmt.Errorf("missing value in env file")
+		return CredsForError, InputForError, CordsForError, "", "", fmt.Errorf("missing value in env file")
 	}
 	port_int, err := strconv.Atoi(port)
 	if err != nil {
 
-		return CredsForError, InputForError, CordsForError, "", fmt.Errorf("error parsing int")
+		return CredsForError, InputForError, CordsForError, "", "", fmt.Errorf("error parsing int")
 	}
 	return types.DbCreds{
 			Host:     host,
@@ -206,7 +213,7 @@ func ReadEnvFromEnvFile() (types.DbCreds, types.UserInput, types.Cordinate, stri
 		}, types.Cordinate{
 			Long: long,
 			Lat:  lat,
-		}, ip, nil
+		}, ip, predUrl, nil
 
 }
 func ParseStringDataToStruct(data types.LocalApiResponse) (*types.LocalApiDataWithCorrectTypes, error) {
@@ -285,5 +292,48 @@ func parseHexStringF32(inp string) (float32, error) {
 	floatVal := math.Float32frombits(uint32(num))
 
 	return floatVal, nil
+
+}
+func GetPrediction(predictionUrl string, input types.PredictionRequest) ([]float64, error) {
+	typeForError := []float64{}
+
+	jsonData, err := json.Marshal(input)
+	if err != nil {
+		return typeForError, err
+	}
+
+	req, err := http.NewRequest("GET", predictionUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return typeForError, err
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return typeForError, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return typeForError, err
+		}
+		return typeForError, fmt.Errorf("error getting prediction %v message: %s", resp.StatusCode, string(body))
+	}
+	var data types.PredictionResponse
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("the error occures here 1")
+		return typeForError, err
+
+	}
+	if err := json.Unmarshal(body, &data); err != nil {
+		return typeForError, err
+	}
+
+	if len(data.Data) != 288 {
+		return typeForError, fmt.Errorf("prediction data is not correct")
+	}
+	return data.Data, err
 
 }

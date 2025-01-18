@@ -8,9 +8,23 @@ import (
 )
 
 type Cordinate struct {
-	Long string
-	Lat  string
+	Long string `json:"long"`
+	Lat  string `json:"lat"`
 }
+
+func (c *Cordinate) ToFloat() (Coordinates, error) {
+	long, err := strconv.ParseFloat(c.Long, 64)
+	if err != nil {
+		return Coordinates{}, err
+	}
+	lat, err := strconv.ParseFloat(c.Lat, 64)
+	if err != nil {
+		return Coordinates{}, err
+	}
+	return Coordinates{Long: long, Lat: lat}, nil
+
+}
+
 type LatestWeather struct {
 	Mu   sync.RWMutex
 	Data ApiRespHourly
@@ -296,9 +310,10 @@ type LocalApiDataWithCorrectTypesWithTimeStampStringsWithWeather struct {
 	GUI_BOOSTING_INFO        string               `json:"gui_boosting_info"`
 	Weather                  ApiRespHourlyStrings `json:"weather"`
 	Total_data               TotalData            `json:"total_data"`
+	Prediction               *[]float64           `json:"prediction"`
 }
 
-func (data *LocalApiDataWithCorrectTypes) ConvertToStrings(weather ApiRespHourly, total_data TotalData) LocalApiDataWithCorrectTypesWithTimeStampStringsWithWeather {
+func (data *LocalApiDataWithCorrectTypes) ConvertToStrings(weather ApiRespHourly, total_data TotalData, pred *[]float64) LocalApiDataWithCorrectTypesWithTimeStampStringsWithWeather {
 	ts := time.Now().Unix()
 	return LocalApiDataWithCorrectTypesWithTimeStampStringsWithWeather{
 		TS:                       time.Unix(ts, 0).Format(time.Kitchen),
@@ -311,6 +326,7 @@ func (data *LocalApiDataWithCorrectTypes) ConvertToStrings(weather ApiRespHourly
 		GUI_CHARGING_INFO:        strconv.FormatUint(uint64(data.GUI_CHARGING_INFO), 10),
 		GUI_BOOSTING_INFO:        strconv.FormatUint(uint64(data.GUI_BOOSTING_INFO), 10),
 		Total_data:               total_data,
+		Prediction:               pred,
 		// will need to do some preprocessing before it will be send down to client since it is too much data and alot of it isn't needed
 		Weather: weather.ToStructOfStrings(),
 	}
@@ -531,4 +547,16 @@ type HourlyUnitsForRespHourly struct {
 	CloudCover      string `json:"cloud_cover"`
 	UvIndex         string `json:"uv_index"`
 	UvIndexClearSky string `json:"uv_index_clear_sky"`
+}
+type PredictionResponse struct {
+	Data []float64 `json:"data"`
+}
+
+type PredictionRequest struct {
+	Date  string      `json:"date"`
+	Coord Coordinates `json:"coordinates"`
+}
+type Coordinates struct {
+	Long float64 `json:"long"`
+	Lat  float64 `json:"lat"`
 }

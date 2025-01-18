@@ -26,13 +26,14 @@ func main() {
 		WeatherCords types.Cordinate
 		senec_ip     string
 		err          error
+		predUrl      string
 	)
 	if os.Getenv("mode") == "docker" {
 		godotenv.Load("run/secrets/config")
-		DbCreds, UserCreds, WeatherCords, senec_ip, err = utils.ReadEnvFromEnvFile()
+		DbCreds, UserCreds, WeatherCords, senec_ip, predUrl, err = utils.ReadEnvFromEnvFile()
 	} else {
 		godotenv.Load(".env")
-		DbCreds, UserCreds, WeatherCords, senec_ip, err = utils.ReadEnvFromEnvFile()
+		DbCreds, UserCreds, WeatherCords, senec_ip, predUrl, err = utils.ReadEnvFromEnvFile()
 	}
 	if err != nil {
 		logger.Fatal(err)
@@ -77,5 +78,5 @@ func main() {
 	go weather.GetWeatherHourly(WeatherCords, logger, weatherCh)
 	server := server.NewServer(logger, service)
 
-	server.Start(dataChan, LatestWeatherData, LatestTotal, LatestLocal)
+	server.Start(dataChan, LatestWeatherData, LatestTotal, LatestLocal, predUrl, WeatherCords)
 }
