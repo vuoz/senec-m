@@ -11,6 +11,13 @@
 ARG GO_VERSION=1.22
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS build
 WORKDIR /src
+COPY . /src
+
+RUN apt update
+RUN apt install -y protobuf-compiler
+
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /go/pkg/mod/ to speed up subsequent builds.
@@ -23,15 +30,14 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 
 # This is the architecture you’re building for, which is passed in by the builder.
 # Placing it here allows the previous steps to be cached across architectures.
-ARG TARGETARCH
+
+RUN protoc --go_out=. --go_opt=paths=source_relative ./proto/types.proto
 
 # Build the application.
 # Leverage a cache mount to /go/pkg/mod/ to speed up subsequent builds.
 # Leverage a bind mount to the current directory to avoid having to copy the
 # source code into the container.
-RUN --mount=type=cache,target=/go/pkg/mod/ \
-    --mount=type=bind,target=. \
-    CGO_ENABLED=0 GOARCH=$TARGETARCH go build -o /bin/server .
+RUN CGO_ENABLED=0  go build -o /bin/server .
 
 ################################################################################
 # Create a new stage for running the application that contains the minimal
