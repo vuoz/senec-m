@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	pb "senec-monitor/proto"
 	"strconv"
 	"sync"
 	"time"
@@ -40,6 +41,16 @@ type TotalData struct {
 	Generated   string `json:"generated"`
 	New         bool   `json:"new"`
 }
+
+func (d *TotalData) ToProto() *pb.TotalDataNew {
+	return &pb.TotalDataNew{
+		Consumption: d.Consumption,
+		Generated:   d.Generated,
+		New:         d.New,
+	}
+
+}
+
 type LatestLocal struct {
 	mu   sync.RWMutex
 	data LocalApiDataWithCorrectTypes
@@ -298,6 +309,8 @@ type LocalApiDataWithCorrectTypesWithTimeStamp struct {
 	GUI_CHARGING_INFO        uint8   `json:"gui_charging_info"`
 	GUI_BOOSTING_INFO        uint8   `json:"gui_boosting_info"`
 }
+
+// crazy type name ik
 type LocalApiDataWithCorrectTypesWithTimeStampStringsWithWeather struct {
 	TS                       string               `json:"ts"`
 	STAT_STATE               string               `json:"stat_state"`
@@ -310,10 +323,9 @@ type LocalApiDataWithCorrectTypesWithTimeStampStringsWithWeather struct {
 	GUI_BOOSTING_INFO        string               `json:"gui_boosting_info"`
 	Weather                  ApiRespHourlyStrings `json:"weather"`
 	Total_data               TotalData            `json:"total_data"`
-	Prediction               *[]float64           `json:"prediction"`
 }
 
-func (data *LocalApiDataWithCorrectTypes) ConvertToStrings(weather ApiRespHourly, total_data TotalData, pred *[]float64) LocalApiDataWithCorrectTypesWithTimeStampStringsWithWeather {
+func (data *LocalApiDataWithCorrectTypes) ConvertToStrings(weather ApiRespHourly, total_data TotalData) LocalApiDataWithCorrectTypesWithTimeStampStringsWithWeather {
 	ts := time.Now().Unix()
 	return LocalApiDataWithCorrectTypesWithTimeStampStringsWithWeather{
 		TS:                       time.Unix(ts, 0).Format(time.Kitchen),
@@ -326,9 +338,25 @@ func (data *LocalApiDataWithCorrectTypes) ConvertToStrings(weather ApiRespHourly
 		GUI_CHARGING_INFO:        strconv.FormatUint(uint64(data.GUI_CHARGING_INFO), 10),
 		GUI_BOOSTING_INFO:        strconv.FormatUint(uint64(data.GUI_BOOSTING_INFO), 10),
 		Total_data:               total_data,
-		Prediction:               pred,
 		// will need to do some preprocessing before it will be send down to client since it is too much data and alot of it isn't needed
 		Weather: weather.ToStructOfStrings(),
+	}
+
+}
+func (data *LocalApiDataWithCorrectTypesWithTimeStampStringsWithWeather) ConvertToProto() pb.NewUiStruct {
+	return pb.NewUiStruct{
+		//generate all the binding
+		Ts:                   data.TS,
+		StatState:            data.STAT_STATE,
+		GuiBatDataPower:      data.GUI_BAT_DATA_POWER,
+		GuiInverterPower:     data.GUI_INVERTER_POWER,
+		GuiHousePow:          data.GUI_HOUSE_POW,
+		GuiGridPow:           data.GUI_GRID_POW,
+		GuiBatDataFuelCharge: data.GUI_BAT_DATA_FUEL_CHARGE,
+		GuiChargingInfo:      data.GUI_CHARGING_INFO,
+		GuiBoostingInfo:      data.GUI_BOOSTING_INFO,
+		Weather:              data.Weather.ConvertToProto(),
+		TotalData:            data.Total_data.ToProto(),
 	}
 
 }
@@ -423,6 +451,14 @@ type ApiRespHourlyStrings struct {
 	Hourly HourlyForRespHourlyStrings `json:"hourly"`
 	Daily  DailyHourly                `json:"daily"`
 }
+
+func (d *ApiRespHourlyStrings) ConvertToProto() *pb.WeatherNew {
+	return &pb.WeatherNew{
+		Hourly: d.Hourly.ConvertToProto(),
+		Daily:  d.Daily.ConvertToProto(),
+	}
+}
+
 type HourlyForRespHourlyStrings struct {
 	Time            []string `json:"time"`
 	Temperature2M   []string `json:"temperature_2m"`
@@ -431,6 +467,18 @@ type HourlyForRespHourlyStrings struct {
 	CloudCover      []string `json:"cloud_cover"`
 	UvIndex         []string `json:"uv_index"`
 	UvIndexClearSky []string `json:"uv_index_clear_sky"`
+}
+
+func (d *HourlyForRespHourlyStrings) ConvertToProto() *pb.HourlyNew {
+	return &pb.HourlyNew{
+		Time:            d.Time,
+		Temperature_2M:  d.Temperature2M,
+		Rain:            d.Rain,
+		Showers:         d.Showers,
+		CloudCover:      d.CloudCover,
+		UvIndex:         d.UvIndex,
+		UvIndexClearSky: d.UvIndexClearSky,
+	}
 }
 
 type ApiRespHourly struct {
@@ -462,6 +510,13 @@ type DailyHourly struct {
 	Sunrise []string `json:"sunrise"`
 }
 
+func (d *DailyHourly) ConvertToProto() *pb.DailyNew {
+	return &pb.DailyNew{
+		Time:    d.Time,
+		Sunset:  d.Sunset,
+		Sunrise: d.Sunrise,
+	}
+}
 func (data *DailyHourly) StripDate() {
 	new_sunrise := make([]string, len(data.Sunrise))
 	for i, val := range data.Sunrise {

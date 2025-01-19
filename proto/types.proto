@@ -3,7 +3,13 @@ syntax = "proto3";
 package prototypes;
 option go_package = "./pb";
 message Prediction {
-    repeated int32 prediction = 1;
+    repeated int32 prediction = 14;
+}
+message data{
+    oneof oneof{
+       NewUiStruct uiData = 1;
+       Prediction prediction = 2;
+    }
 }
 
 message NewUiStruct {
@@ -18,7 +24,6 @@ message NewUiStruct {
   string gui_boosting_info = 9;
   WeatherNew weather = 10;
   TotalDataNew total_data = 11;
-  Prediction prediction = 12;
 }
 
 message TotalDataNew {

@@ -2,3 +2,4 @@
 .docker.env
 .secrets
 tmp
+/proto/types.pb.go

@@ -100,7 +100,8 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request, clients *WsStruct, pr
 	// writing this upon first connection to avoid sending too much data at once
 	if pred != nil && pred.Data != nil {
 		pred_new := pb.Prediction{Prediction: *pred.Data}
-		bytes_new, err := proto.Marshal(&pred_new)
+		protoData := pb.Data{Oneof: &pb.Data_Prediction{Prediction: &pred_new}}
+		bytes_new, err := proto.Marshal(&protoData)
 		if err != nil {
 			return err
 		}

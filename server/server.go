@@ -97,20 +97,17 @@ func (s *Server) Start(c <-chan *types.LocalApiDataWithCorrectTypes, latestWeath
 				// we scale it down since the device cant handle this much data
 				scaled := make([]int32, len(pred))
 
-				if s.DailyPrediction.Data == nil {
-					data := make([]int32, len(pred))
-					s.DailyPrediction.Data = &data
-				}
-				data := *s.DailyPrediction.Data
 				for i := 0; i < len(pred); i++ {
-					scaled[i] = int32(data[i] * 1000)
+					scaled[i] = int32(pred[i] * 1000)
 
 				}
 				s.DailyPrediction.Data = &scaled
 				s.DailyPrediction.mu.Unlock()
 				s.Clients.map_mu.Lock()
 				pred_proto := pb.Prediction{Prediction: scaled}
-				bytes, err := proto.Marshal(&pred_proto)
+				protoData := pb.Data{Oneof: &pb.Data_Prediction{Prediction: &pred_proto}}
+
+				bytes, err := proto.Marshal(&protoData)
 				if err != nil {
 					s.logger.Err("Error marshalling prediction: ", err)
 				}
@@ -142,21 +139,22 @@ func (s *Server) Start(c <-chan *types.LocalApiDataWithCorrectTypes, latestWeath
 			select {
 			case msg := <-c:
 				{
-					// error doesnt matter since it still returns an emtpy struct
 					v, _ := latestTotal.Get()
 					latestLocal.Set(*msg)
 
-					var string_data types.LocalApiDataWithCorrectTypesWithTimeStampStringsWithWeather
-					if s.DailyPrediction.Data != nil && s.DailyPrediction.new {
-						//todo
-						string_data = msg.ConvertToStrings(latestWeather.Get(), v, nil)
-					} else {
-						string_data = msg.ConvertToStrings(latestWeather.Get(), v, nil)
+					string_data := msg.ConvertToStrings(latestWeather.Get(), v)
+					UIdata := string_data.ConvertToProto()
+					protoData := pb.Data{Oneof: &pb.Data_UiData{UiData: &UIdata}}
+
+					bytes_new, err := proto.Marshal(&protoData)
+					if err != nil {
+						s.logger.Err("Error marshalling data: ", err)
+						continue
 					}
 
 					s.Clients.map_mu.Lock()
 					for k, v := range s.Clients.ws_clients {
-						if err := v.conn.WriteJSON(string_data); err != nil {
+						if err := v.conn.WriteMessage(websocket.BinaryMessage, bytes_new); err != nil {
 							if v.retries > 3 {
 								delete(s.Clients.ws_clients, k)
 								continue

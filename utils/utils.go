@@ -323,7 +323,6 @@ func GetPrediction(predictionUrl string, input types.PredictionRequest) ([]float
 	var data types.PredictionResponse
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Println("the error occures here 1")
 		return typeForError, err
 
 	}

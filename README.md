@@ -115,6 +115,10 @@ LONGITUDE=
 LATITUDE=
 SENEC_IP=
 ```
+Generate proto files}
+```shell
+protoc --go_out=. --go_opt=paths=source_relative ./proto/types.proto
+```
 Run via:
 
     go run .
